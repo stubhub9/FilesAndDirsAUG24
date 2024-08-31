@@ -5,7 +5,7 @@
 #region  FIELDS
 string filename1 = "Reminders.txt";
 #endregion
-#region  Project MAIN
+#region  Project TopLevel statements
 
 UseStreamWriter ( filename1 );
 UseStreamReader ( filename1 );

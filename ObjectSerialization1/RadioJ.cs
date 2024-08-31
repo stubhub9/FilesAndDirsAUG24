@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 
 namespace ObjectSerialization1
 {
-    public class Radio
+    public class RadioJ
     {
+        [JsonInclude]
         public bool HasTweeters;
+        [JsonInclude]
         public bool HasSubWoofers;
+        [JsonInclude]
         public List <double> StationPresets;
+        [JsonInclude]
         public string RadioId = "XF-5";
         public override string ToString ()
         {
