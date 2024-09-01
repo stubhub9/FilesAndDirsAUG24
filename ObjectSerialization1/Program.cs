@@ -83,6 +83,25 @@ PersonJ personJ = new PersonJ
 };
 
 
+JsonSerializerOptions options = new JsonSerializerOptions ()
+{
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = null,  // Pascal Casing
+    IncludeFields = true,
+    WriteIndented = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString,
+};
+
+JsonSerializerOptions optionsWeb = new ( JsonSerializerDefaults.Web )
+{
+    // also .General
+    //  .Web attr should include:  PropNameCaseIns, JsonNaming Camel, and string read numbers
+    WriteIndented = true,
+    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+};
+
+
+
 #endregion  JSON Fields
 #region  Top Level Statements
 
@@ -146,7 +165,27 @@ Console.BackgroundColor = prevBgColor;
 newBgColor++;
 
 
+Console.BackgroundColor = newBgColor;
 
+SaveAsJsonFormatO ( options, spycarJ, "CarDataJ.json" );
+Console.WriteLine ( $"=> Saved car in JSON format" );
+Console.BackgroundColor = prevBgColor;
+newBgColor++;
+SaveAsJsonFormatO ( options, personJ, "PersonDataJ.json" );
+Console.WriteLine ( $"=> Saved person in JSON format" );
+
+SaveAsJsonFormatO ( options, myCars, "CarCollectionO.json" );
+
+SpyCarJ savedJsonCar = ReadAsJsonFormat<SpyCarJ> ( options, "CarDataJ.json" );
+
+
+Console.BackgroundColor = newBgColor;
+Console.WriteLine ($"Read Car:  {savedJsonCar.ToString ()}");
+Console.BackgroundColor = prevBgColor;
+newBgColor++;
+
+List<SpyCarJ> savedJsonCars = ReadAsJsonFormat<List<SpyCarJ>> ( options, "CarCollectionJ.json" );
+Console.WriteLine($"Read Car:  {savedJsonCars.ToString()}");
 
 
 
@@ -179,6 +218,44 @@ static void SaveAsXmlFormat<T> (T objGraph, string fileName)
 
 #endregion  XML Methods Group
 #region  JSON Methods Group
+
+static void HandleNullStrings ()
+{
+    Console.WriteLine ( "Handling Null Strings" );
+    var options = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = null,  // Pascal Casing
+        IncludeFields = true,
+        WriteIndented = true,
+        Converters = { new JsonStringNullToEmptyConverter () },
+    };
+
+    //  Create a new object with a null string
+    var radio = new Radio
+    {
+        HasSubWoofers = true,
+        HasTweeters = true,
+        // as a test,
+        RadioId = null,
+    };
+
+    //  serialize object to JSON
+    var json = JsonSerializer.Serialize ( radio, options );
+    Console.WriteLine(json);
+
+
+
+}
+
+
+//TODO:  Getting an error; maybe if i add [JSON ATTRIBUTES] to the XML files.
+static T ReadAsJsonFormat<T> (JsonSerializerOptions options, string fileName) => System.Text.Json.JsonSerializer.Deserialize <T> ( File.ReadAllText ( fileName ), options );
+
+//  Had to name O,  because the next method WITH 2 not 3, PARAMS, was complaining.
+static void  SaveAsJsonFormatO <T> (JsonSerializerOptions options, T objGraph, string fileName)
+    => File.WriteAllText ( fileName, System.Text.Json.JsonSerializer.Serialize (objGraph, options));
+
 static void SaveAsJsonFormat<T> ( T objGraph, string fileName )
 {
     File.WriteAllText ( fileName, System.Text.Json.JsonSerializer.Serialize ( objGraph ) );
@@ -224,6 +301,7 @@ static void SaveAsJsonFormatAttr1<T> ( T objGraph, string fileName )
     File.WriteAllText ( fileName, System.Text.Json.JsonSerializer.Serialize ( objGraph, options ) );
 }
 
+//  Streaming Serialization
 static async IAsyncEnumerable<int> PrintNumbers (int n)
 {
     for ( int i = 0; i < n; i++ )
@@ -239,6 +317,20 @@ async static void SerializeAsync ()
     var data = new { Data = PrintNumbers ( 3 ) };
     await JsonSerializer.SerializeAsync ( stream, data );
     Console.WriteLine ();
+}
+
+
+//  New API for Streaming Deserialization
+async static void DeserializeAsync ()
+{
+    Console.WriteLine("Async Deserialization");
+    var stream = new MemoryStream (System.Text.Encoding.UTF8.GetBytes("[0,1,2,3,4]"));
+
+    await foreach (int item in JsonSerializer.DeserializeAsyncEnumerable<int> (stream))
+    {
+        Console.Write(item);
+    }
+    Console.WriteLine();
 }
 
 
